@@ -14,9 +14,9 @@ IO.println(String.formatted(
     Path.of("").toUri()
 ))
 
-IO.println("| Source Installer.java from https://github.com/sormuras/jenesis/raw/refs/heads/main/installation/Installer.java ...")
+IO.println("| Source Installer.java from https://github.com/sormuras/jenesis/raw/refs/heads/jdk-based-installer/installation/Installer.java ...")
 
-/open https://github.com/sormuras/jenesis/raw/refs/heads/main/installation/Installer.java
+/open https://github.com/sormuras/jenesis/raw/refs/heads/jdk-based-installer/installation/Installer.java
 
 int code = 0
 try {
