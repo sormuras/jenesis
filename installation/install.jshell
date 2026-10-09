@@ -1,0 +1,32 @@
+//
+// Jenesis bootstrap installer.
+//
+
+IO.println(String.formatted(
+    """
+    Jensis Installer
+    | Java %s
+    | %s
+    | %s
+    """,
+    Runtime.version(),
+    System.getProperty("os.name"),
+    Path.of("").toUri()
+))
+
+IO.println("| Source Installer.java from https://github.com/sormuras/jenesis/raw/refs/heads/main/installation/Installer.java ...")
+
+/open https://github.com/sormuras/jenesis/raw/refs/heads/main/installation/Installer.java
+
+int code = 0
+try {
+  Installer.install();
+}
+catch(Throwable throwable) {
+  System.err.println(throwable);
+  code = 1;
+}
+
+IO.println("| Installation of Jenesis finished with exit code " + code)
+
+/exit code
