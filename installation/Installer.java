@@ -1,7 +1,8 @@
 import module java.base;
 
-record Installer() {
-  void install() {
+@SuppressWarnings("unused")
+interface Installer {
+  static void install() {
     new Initializer().initialize();
   }
 
@@ -93,13 +94,14 @@ record Installer() {
       var files = new ArrayList<Path>();
       try (var fs = FileSystems.newFileSystem(zip)) {
         for (var root : fs.getRootDirectories()) {
-          try (var stream = Files.walk(root)) {
+          var start = root.resolve("jenesis-main", "sources", "build", "jenesis");
+          try (var stream = Files.walk(start)) {
             var list = stream.filter(Files::isRegularFile).toList();
             for (var file : list) {
-              var relative = root.relativize(file);
+              var relative = start.relativize(file);
               var source = sub == 0 ? relative : relative.subpath(sub, relative.getNameCount());
               var target = dir.resolve(source.toString());
-              // debug(target.toUri().toString());
+              debug(target.toUri() + " <- " + source);
               Files.createDirectories(target.getParent());
               Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
               files.add(target);
@@ -111,9 +113,9 @@ record Installer() {
     }
   }
 
-  record Initializer(String repo, String version, Path home, Path path) {
+  record Initializer(String repository, String version, Path home, Path path) {
     // source repository, owner/name
-    static String REPO = "jenesis/jenesis";
+    static String REPOSITORY = "jenesis/jenesis";
     // defaults to git head reference of the `main` branch
     static String VERSION = System.getProperty("-Dversion".substring(2), "main");
     // defaults to the current working directory
@@ -126,7 +128,7 @@ record Installer() {
     }
 
     Initializer(String version) {
-      this(REPO, version, HOME, PATH);
+      this(REPOSITORY, version, HOME, PATH);
     }
 
     void initialize() {
@@ -135,14 +137,15 @@ record Installer() {
         initializeArgumentFiles();
       } catch (Exception exception) {
         System.err.println("Initialization failed: " + exception.getMessage());
+        if (Internal.DEBUG) exception.printStackTrace(System.err);
       }
     }
 
     void initializeSources() throws Exception {
       var uris =
           List.of(
-              "https://github.com/" + repo + "/archive/refs/tags/" + version + ".zip",
-              "https://github.com/" + repo + "/archive/refs/heads/" + version + ".zip");
+              "https://github.com/" + repository + "/archive/refs/tags/" + version + ".zip",
+              "https://github.com/" + repository + "/archive/refs/heads/" + version + ".zip");
       for (var uri : uris) {
         if (Internal.head(uri)) {
           installSourcesFromUri(uri);
@@ -158,7 +161,7 @@ record Installer() {
       IO.println("Installing Jenesis [" + version + "] into " + path.toUri() + "...");
       // download and unzip
       Internal.copy(uri, zip, StandardCopyOption.REPLACE_EXISTING);
-      Internal.unzip(zip, dir, 1);
+      Internal.unzip(zip, dir, 0);
       // clean up
       Internal.delete(tmp);
     }
@@ -166,7 +169,7 @@ record Installer() {
     void initializeArgumentFiles() throws Exception {
       var jenesis = home.resolve("jenesis");
       if (!Files.exists(jenesis)) {
-        var program = home.resolve(path).resolve("Main.java");
+        var program = home.resolve(path).resolve("Make.java");
         var command = home.relativize(program).toString().replace('\\', '/');
         var lines = List.of("# Argument file for launching Jensis", command);
         Files.write(jenesis, lines);
